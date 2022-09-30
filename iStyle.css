@@ -1,10 +1,26 @@
-/*header*/
+/*Header*/
 .c0re{color:red}
 h1{text-align:center;font-size:40px}
 h2{text-align:center;font-size:20px;margin-left:150px;margin-right:150px}
 
-/*body*/
-body{background:black url('iBackground.jpg') no-repeat;background-size:100%;color:#9900ff;text-shadow:1px 1px darkred;}
+/*Body*/
+body{background:black url('iBackground.jpg') no-repeat;background-size:100%;color:white;text-shadow:1px 1px darkred;}
 table{margin-left:auto;margin-right:auto;padding:50px;text-align:center;border-collapse: separate;border-spacing: 50px 15px;}
 td{font-size:20px}
 th{font-size:30px}
+
+/*Links*/
+
+body a{text-decoration:none}
+
+body a:link {
+	color: white;
+	}
+	
+body a:visited {
+	color: pink;
+	}
+	
+body a:hover {
+	color: darkblue;
+	}
