@@ -1,0 +1,87 @@
+/*Header*/
+header{}
+#head {
+  width: 100%;
+  height: 100%;
+  background: transparent url("images/Background.jpg") no-repeat center;
+  border-radius:250px;
+  text-shadow: 2px 2px black;
+  text-align: center;
+  color: deeppink}
+h1{font-size:100px}
+h2{font-size:50px}
+
+/*Body*/
+body{
+	text-shadow: 1px 1px black;
+	width:1200px;
+	margin:auto;
+	width:75%;
+	padding:0px;
+	background:black url("images/body-back.png") no-repeat center;
+	background-size: cover;
+	color:white}
+
+body a:link {
+	color: gray;
+	}
+	
+body a:visited {
+	color: pink;
+	}
+	
+body a:hover {
+	color: white;
+	}
+
+.summary{color:white}
+
+h3{
+	text-shadow: 1px 1px black;
+	color:deeppink;
+	text-align:center;}
+
+main h3{background:rgba(75,75,75,0.5)}
+
+.shift{width:74.5%}
+	
+main{background-color:rgba(70,5,40,0.5);border-radius:50px;padding:10px}
+
+/*Side Bar*/
+.sidebar{
+	border-radius:50px;
+	float:right;
+	text-align:center;
+	}
+	
+aside{background-color: rgba(0,0,0,0.5)}
+	
+.sidebar ul{
+	list-style-type:none;
+	display:inline;
+	}
+	
+	
+.sidebar li a{
+	text-decoration:none}
+	
+.sidebar li a:link {
+	color: white;
+	}
+	
+.sidebar li a:visited {
+	color: pink;
+	}
+	
+.sidebar li a:hover {
+	color: dimgray;
+	}
+
+.design-name{font-weight:bold}
+
+.designer-name{font-style:italic}
+
+.other{font-weight:bold}
+
+/*Footer*/
+footer{text-align:center}
