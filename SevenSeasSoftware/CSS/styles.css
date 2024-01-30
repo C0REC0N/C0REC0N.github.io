@@ -1,0 +1,88 @@
+/*Main*/
+
+	header {
+      background-color: #0f4662;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+	 
+    }
+	
+	body {
+		
+		background-color: #538aad;
+		
+		width:80%;
+		margin:auto;
+		padding: 10px;
+		font-family:Papyrus;
+		color: white;
+	}
+	
+	a {text-decoration:none; color:white;}
+	
+	footer {height:200px}
+	
+	
+	section {background-color: #0f5387; border-radius:20px;}
+	
+	div {background-color: #0a376e; padding-top: 10px;}
+	
+	#wave{ 
+	
+	background: linear-gradient(to bottom, transparent, #29c7fb); 
+
+	}
+
+    .logo {
+      float: left;
+
+	  width: 95px;
+	  height:auto;
+    }
+	
+	 .fixed-image {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+	  width:100%;
+      text-align: center;
+	  z-index: 100; /* Set a high z-index to ensure it appears above other sections */
+    }
+
+    /* Optional styling for the image */
+    .fixed-image img {
+      width: 100%; /* Adjust the width as needed */
+	  height:150px; /* Maintain aspect ratio */
+	  opacity:0.5; 
+    }
+	
+    
+
+	.container {
+      width: 100%;
+    }
+
+    .left, .right {
+      width: 48%; /* Adjust the width as needed */
+      margin: 0.5%; /* Adjust the margin as needed */
+      float: left; /* Use "float" to place elements side by side */
+      box-sizing: border-box; /* Include padding and border in the element's total width and height */
+	  text-align: center;
+    }
+	
+	.left h3 {font-style: italic;}
+	
+	p {padding: 10px;}
+	
+	.right {float: right;}
+	
+
+    /* Clear the float to prevent layout issues */
+    .clearfix:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+	
+	ul {list-style-type: none;}
