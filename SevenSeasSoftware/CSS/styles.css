@@ -23,6 +23,7 @@
 	
 	footer {height:200px}
 	
+	h1 {float: left;}
 	
 	section {background-color: #0f5387; border-radius:20px;}
 	
@@ -38,7 +39,7 @@
       float: left;
 
 	  width: 95px;
-	  height:auto;
+	  height: auto;
     }
 	
 	 .fixed-image {
