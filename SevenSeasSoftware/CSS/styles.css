@@ -8,6 +8,14 @@
 	  height:100px;
     }
 	
+	@media screen and (max-width: 800px) {
+		
+		body {
+		
+			font-family:'Poppins', sans-serif;
+		}
+	}
+	
 	body {
 		
 		background-color: #538aad;
