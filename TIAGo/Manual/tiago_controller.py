@@ -1,147 +1,199 @@
 import pygame
+pygame.quit()
 import subprocess
 import time
 
-# Initialize pygame and joystick
-pygame.init()
-pygame.joystick.init()
+joystick = None
 
-# Check if a joystick is connected
-if pygame.joystick.get_count() == 0:
-    print("No joystick detected. Please connect a Logitech controller.")
-    exit()
+def setup():
+    global joystick
+    # Initialize pygame and joystick
+    pygame.init()
+    pygame.joystick.init()
 
-# Initialize the first joystick
-joystick = pygame.joystick.Joystick(0)
-joystick.init()
-print(f"Connected to: {joystick.get_name()}")
+    # Check if a joystick is connected
+    if pygame.joystick.get_count() == 0:
+        print("No joystick detected. Please connect a Logitech controller.")
+        exit()
 
-# Axis mappings
-AXIS_LEFT_Y = 1  # Forward/Backward movement
-AXIS_LEFT_X = 0  # Rotation left/right
-AXIS_RIGHT_Y = 3 # Head up/down
-AXIS_RIGHT_X = 2 # Head left/right
-AXIS_RT = 5      # Right Trigger (Tighten Grip)
-AXIS_LT = 4      # Left Trigger (Loosen Grip)
+    # Initialize the first joystick
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    print(f"Connected to: {joystick.get_name()}")
 
-# D-Pad mappings (hat switch)
-DPAD_UP = (0, 1)
-DPAD_DOWN = (0, -1)
 
-# Button mappings
-BUTTON_A = 0   # Make Tiago speak
-BUTTON_L_STICK = 8  # Left stick click
-BUTTON_R_STICK = 9  # Right stick click
+# Basic Arm Command  
 
-# Speed settings
-MAX_LINEAR_SPEED = 0.5  # Maximum forward/backward speed
-MAX_ANGULAR_SPEED = 1.0 # Maximum rotation speed
-MAX_HEAD_SPEED = 0.5    # Maximum head movement speed
-TOROSO_STEP = 0.05      # Step size for torso movement
-GRIP_STEP = 0.1         # Step size for grip control
-DEADZONE = 0.1          # Ignore small movements
+def tighten():
+    command = "rosrun play_motion run_motion_python_node.py close_right"
+    print("Tightening Grip") 
+    speak("Caution: Tightening Right Grip")
+    subprocess.run(command, shell=True, text=True)
 
-# Default grip state
-grip_position = 0.0  # Open hand
+def release():
+    command = "rosrun play_motion run_motion_python_node.py open_right"
+    print("Releasing Grip") 
+    speak("Caution: Releasing Right Grip")  
+    subprocess.run(command, shell=True, text=True)
+    
+def offer():
+    command = "rosrun play_motion run_motion_python_node.py offer_right"
+    print("Offering Hand")
+    speak("Caution: Offering Right Hand")
+    subprocess.run(command, shell=True, text=True)
 
-def send_cmd_vel(linear_speed, angular_speed):
-    """ Send movement command to Tiago via ROS """
-    command = f"rostopic pub -1 /cmd_vel geometry_msgs/Twist '{{linear: {{x: {linear_speed}, y: 0.0, z: 0.0}}, angular: {{x: 0.0, y: 0.0, z: {angular_speed}}}}}'"
-    print(f"Executing: {command}")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+def home_right():
+    command = "rosrun play_motion run_motion_python_node.py home_right"
+    print("Retracting Hand")
+    speak("Caution: Retracting Right Hand")
+    subprocess.run(command, shell=True, text=True)
 
-def send_head_command(pan, tilt):
-    """ Move Tiago's head """
-    command = f"rostopic pub -1 /head_controller/command trajectory_msgs/JointTrajectory '{{joint_names: [\"head_1_joint\", \"head_2_joint\"], points: [{{positions: [{pan}, {tilt}], time_from_start: {{secs: 1, nsecs: 0}}}}]}}'"
-    print(f"Moving head: pan={pan}, tilt={tilt}")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+def speak(text):
+    command = f"""timeout 3 rostopic pub -1 /tts/goal pal_interaction_msgs/TtsActionGoal "{{
+                    goal: {{
+                        rawtext: {{
+                            text: '{text}',
+                            lang_id: 'en_GB'
+                        }}
+                    }}
+                }}" """
+    print("Tiago is Speaking")
+    subprocess.run(command, shell=True, text=True)
 
-def send_torso_command(height):
-    """ Raise or lower Tiago's torso """
-    command = f"rostopic pub -1 /torso_controller/command std_msgs/Float64 '{height}'"
-    print(f"Adjusting torso to height: {height}")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+pan = 0
+tilt = 0
 
-def send_grip_command(position):
-    """ Control Tiago's right hand grip """
-    command = f"rostopic pub -1 /gripper_controller/command std_msgs/Float64 '{position}'"
-    print(f"Adjusting right hand grip: {position}")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+def move_head():
+    global pan
+    global tilt
+    """Send the head position command to Tiago."""
+    if pan != 0:
+        command = f"rosrun play_motion move_joint head_1_joint {pan} 1.0"
+    else:
+        command = f"rosrun play_motion move_joint head_2_joint {tilt} 1.0"
+    
+    subprocess.run(command, shell=True, text=True)
+    pan = 0.0
+    tilt = 0.0
 
-def emergency_stop():
-    """ Send emergency stop command """
-    command = "rostopic pub -1 /emergency_stop std_msgs/Bool 'true'"
-    print("Emergency Stop Activated!")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+def resetHead():
+    command = f"rosrun play_motion move_joint head_1_joint 0.0 1.0"
+    subprocess.run(command, shell=True, text=True)
+    command = f"rosrun play_motion move_joint head_2_joint 0.0 1.0"
+    subprocess.run(command, shell=True, text=True)
 
-def make_tiago_speak():
-    """ Make Tiago say a phrase """
-    command = "rostopic pub -1 /sound/play_sound std_msgs/String '\"Hello, I am Tiago!\"'"
-    print("Tiago speaking: 'Hello, I am Tiago!'")
-    subprocess.run(command, shell=True, executable="/bin/bash")
+def lookY(value):
+    global tilt
+    tilt = value
+    move_head()
 
-# Main loop
-running = True
-while running:
-    linear_speed = 0.0
-    angular_speed = 0.0
-    head_pan = 0.0
-    head_tilt = 0.0
-    torso_height = 0.35  # Default torso height
+def lookX(value):
+    global pan
+    pan = value
+    move_head()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+torso_pos = 0.15  # 0.0 (down) to 0.34 (up)
+step = 0.05  # How much to move per key press
+
+def move_torso():
+    global torso_pos
+    """Send the torso lift position command to Tiago."""
+    command = f"rosrun play_motion move_joint torso_lift_joint {torso_pos} 2.0"
+    subprocess.run(command, shell=True, text=True)
+
+# Define key actions
+def torsoUp():
+    global torso_pos
+    if torso_pos < 0.35:
+        torso_pos += step
+        print("Rising")
+        move_torso()
+
+def torsoDown():
+    global torso_pos
+    if torso_pos > 0.0:
+        torso_pos -= step
+        print("Lowering")
+        move_torso()
+
+def handle_button_press(button):
+    if button == 0:
+        print("Button A pressed!")
+    elif button == 1:
+        print("Button B pressed!")
+    elif button == 2:
+        print("Button X pressed!")
+    elif button == 3:
+        print("Button Y pressed!")
+    elif button == 4:
+        home_right()
+    elif button == 5:
+        offer()
+    elif button == 9:
+        print("Left Stick")
+    elif button == 10:
+        resetHead()
+
+def handle_left_joy(value):
+
+    forward = (0,1)
+    right = (1,0)
+    left = (-1,0)
+    backward = (0,-1)
+
+def handle_other_buttons(axis, value):
         
-        elif event.type == pygame.JOYAXISMOTION:
-            if event.axis == AXIS_LEFT_Y:
-                linear_speed = -event.value  # Invert Y-axis for forward/backward
-            elif event.axis == AXIS_LEFT_X:
-                angular_speed = event.value  # Left = negative, Right = positive
-            elif event.axis == AXIS_RIGHT_X:
-                head_pan = event.value * MAX_HEAD_SPEED  # Move head left/right
-            elif event.axis == AXIS_RIGHT_Y:
-                head_tilt = -event.value * MAX_HEAD_SPEED  # Move head up/down
-            elif event.axis == AXIS_RT:
-                grip_position += GRIP_STEP  # Tighten grip
-                if grip_position > 1.0:
-                    grip_position = 1.0  # Max closed
-            elif event.axis == AXIS_LT:
-                grip_position -= GRIP_STEP  # Loosen grip
-                if grip_position < 0.0:
-                    grip_position = 0.0  # Fully open
+    if axis == 1: #torso. -1 = up. 1 = down
+        value = 0
+    elif axis == 2: #leftT 1 = press
+        if value == 1:
+            release()
+    elif axis == 3: #lookX -1 = up. 1 = down
+        print (value)
+        if value <= -1:
+            lookX(1)
+        elif value >= 1:
+            lookX(-1)
+    elif axis == 4: #lookY -1 = left. 1 = right
+        print (value)
+        if value <= -1:
+            lookY(1)
+        elif value >= 1:
+            lookY(-1)
+    elif axis == 5: #rightT 1 = press
+        if value == 1:
+            tighten()
 
-        elif event.type == pygame.JOYHATMOTION:
-            dpad = event.value
-            if dpad == DPAD_UP:
-                torso_height += TOROSO_STEP
-            elif dpad == DPAD_DOWN:
-                torso_height -= TOROSO_STEP
+def reset_joystick_state():
+    global joystick
+    for button in range(joystick.get_numbuttons()):
+        joystick.get_button(button)  # Force the button states to be refreshed
 
-        elif event.type == pygame.JOYBUTTONDOWN:
-            if event.button == BUTTON_A:
-                make_tiago_speak()
-            elif event.button == BUTTON_L_STICK and event.button == BUTTON_R_STICK:
-                emergency_stop()
+def runController():
+    setup()
+    # Main loop
+    running = True
+    while running:
+        # Handle events
+        for event in pygame.event.get():
+            print(event.type)
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.JOYBUTTONDOWN:  # Check if a button is pressed
+                button = event.button
+                handle_button_press(button)
+            elif event.type == 1538: # Left Joystick
+                handle_left_joy(event.value)
+                value = event.value
+            elif event.type == 1536:
+                handle_other_buttons(event.axis, event.value)
 
-    # Apply deadzone
-    if abs(linear_speed) < DEADZONE:
-        linear_speed = 0.0
-    if abs(angular_speed) < DEADZONE:
-        angular_speed = 0.0
-    if abs(head_pan) < DEADZONE:
-        head_pan = 0.0
-    if abs(head_tilt) < DEADZONE:
-        head_tilt = 0.0
+      
 
-    # Scale speed values
-    linear_speed = round(linear_speed * MAX_LINEAR_SPEED, 2)
-    angular_speed = round(angular_speed * MAX_ANGULAR_SPEED, 2)
+        reset_joystick_state()
+    
+    pygame.quit()
 
-    # Send movement commands
-    send_cmd_vel(linear_speed, angular_speed)
-    send_head_command(head_pan, head_tilt)
-    send_torso_command(torso_height)
-    send_grip_command(grip_position)
+if __name__ == "__main__":
+    runController()
 
-pygame.quit()
