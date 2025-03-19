@@ -1,15 +1,15 @@
-import keyboard
+from pynput import keyboard
 import subprocess
 
 # Base Movement Commands
 
 linear_speed = 0.0  # Forward/Backward movement
 angular_speed = 0.0  # Left/Right rotation
-speed_step = 0.1  # Step size for speed changes
+speed = 0.2 # Step size for speed changes
 
-def move_base():
+def move_base(count):
     """Send velocity command to Tiago's base."""
-    command = f"""rostopic pub /cmd_vel geometry_msgs/Twist '
+    command = ["timeout", f"{count+2}", "rostopic", "pub", "--rate", "10", "/mobile_base_controller/cmd_vel", "geometry_msgs/Twist", f"""
 linear:
   x: {linear_speed}
   y: 0.0
@@ -17,94 +17,114 @@ linear:
 angular:
   x: 0.0
   y: 0.0
-  z: {angular_speed}'"""
+  z: {angular_speed}"""]
     
-    subprocess.run(command, shell=True, text=True)
+    process = subprocess.Popen(command)
+    check_for_stop(process)
+    reset_speed()
 
-def moveForward():
+def reset_speed():
     global linear_speed
-    linear_speed += speed_step
+    global angular_speed
+    linear_speed = 0.0
+    angular_speed = 0.0
+
+def moveForward(count):
+    global linear_speed
+    global speed
+    linear_speed = speed
     print("Moving Forward")
-    move_base()
+    move_base(count)
 
-def moveBackward():
+def moveBackward(count):
     global linear_speed
-    linear_speed -= speed_step
+    global speed
+    linear_speed = -speed
     print("Moving Backward")
-    move_base()
+    move_base(count)
 
-def turnLeft():
+def turnLeft(count):
     global angular_speed
-    angular_speed += speed_step
+    global speed
+    angular_speed = speed
     print("Turning Left")
-    move_base()
+    move_base(count)
 
-def turnRight():
+def turnRight(count):
     global angular_speed
-    angular_speed -= speed_step
+    global speed
+    angular_speed = -speed
     print("Turning Right")
-    move_base()
+    move_base(count)
     
 # Head Movement Commands
 
-head_x = 0.0  # Left (-) / Right (+)
-head_y = 0.0  # Down (+) / Up (-)
-step = 0.1  # Step size for each movement
+pan = 0.0  # Left (-) / Right (+)
+tilt = 0.0  # Down (+) / Up (-)
+head_step = 0.3  # Step size for each movement
 
 def move_head():
+    global pan
+    global tilt
     """Send the head position command to Tiago."""
-    command = f"""rostopic pub /head_controller/command trajectory_msgs/JointTrajectory '
-joint_names: ["head_1_joint", "head_2_joint"]
-points:
-  - positions: [{head_x}, {head_y}]
-    time_from_start: {{sec: 2, nanosec: 0}}'"""
+    if pan != 0:
+        command = f"rosrun play_motion move_joint head_1_joint {pan} 2.0"
+    else:
+        command = f"rosrun play_motion move_joint head_2_joint {tilt} 2.0"
     
     subprocess.run(command, shell=True, text=True)
+    resetHead()
 
-def headUp():
-    global head_y
-    head_y -= step
+def resetHead():
+    global tilt
+    global pan
+    pan = 0.0
+    tilt = 0.0
+
+def headUp(count):
+    global tilt
+    global head_step
+    tilt += head_step*count
     print("Looking Up")
     move_head()
 
-def headDown():
-    global head_y
-    head_y += step
+def headDown(count):
+    global tilt
+    global head_step
+    tilt -= head_step*count
     print("Looking Down")
     move_head()
 
-def headLeft():
-    global head_x
-    head_x += step
+def headLeft(count):
+    global pan
+    global head_step
+    pan += head_step*count
     print("Looking Left")
     move_head()
 
-def headRight():
-    global head_x
-    head_x -= step
+def headRight(count):
+    global pan
+    global head_step
+    pan -= head_step*count
     print("Looking Right")
     move_head()
     
     
 # Moving Torso Commands
 
-torso_pos = 0.0  # 0.0 (down) to 0.34 (up)
+torso_pos = 0.15  # 0.0 (down) to 0.34 (up)
 step = 0.05  # How much to move per key press
 
 def move_torso():
+    global torso_pos
     """Send the torso lift position command to Tiago."""
-    command = f"""rostopic pub /torso_controller/command trajectory_msgs/JointTrajectory '
-joint_names: ["torso_lift_joint"]
-points:
-  - positions: [{torso_pos}]
-    time_from_start: {{sec: 2, nanosec: 0}}'"""
-    
+    command = f"rosrun play_motion move_joint torso_lift_joint {torso_pos} 2.0"
     subprocess.run(command, shell=True, text=True)
 
 # Define key actions
 def torsoUp():
     global torso_pos
-    if torso_pos < 0.34:
+    if torso_pos < 0.35:
         torso_pos += step
         print("Rising")
         move_torso()
@@ -115,85 +135,210 @@ def torsoDown():
         torso_pos -= step
         print("Lowering")
         move_torso()
+
+def resetTorso():
+    global torso_pos
+    torso_pos = 0.0
+    print("Resetting Torso")
+    move_torso()
         
-# Grip Command        
- 
-grip_position = 0.0 
-GRIP_STEP = 0.1      
-        
-def grip(position):
-    """ Control Tiago's right hand grip """
-    command = f"rostopic pub -1 /gripper_controller/command std_msgs/Float64 '{position}'"
-    print(f"Adjusting right hand grip: {position}")
-    subprocess.run(command, shell=True, executable="/bin/bash") 
-                
-def tightenGrip():
-    global grip_position
-    grip_position += GRIP_STEP  # Tighten grip
-    if grip_position > 1.0:
-        grip_position = 1.0  # Max closed
-    print("Tightening")
-    grip(grip_position)      
+# Basic Arm Command  
+
+def tighten():
+    command = "rosrun play_motion run_motion_python_node.py close_right"
+    print("Tightening Grip") 
+    speak("Caution: Tightening Right Grip")
+    subprocess.run(command, shell=True, text=True)
+
+def release():
+    command = "rosrun play_motion run_motion_python_node.py open_right"
+    print("Releasing Grip") 
+    speak("Caution: Releasing Right Grip")  
+    subprocess.run(command, shell=True, text=True)
     
-def releaseGrip():
-    global grip_position
-    grip_position -= GRIP_STEP  # Release grip
-    if grip_position < 0.0:
-        grip_position = 0.0  # Max open
-    print("Releasing")
-    grip(grip_position)                            
+def offer():
+    command = "rosrun play_motion run_motion_python_node.py offer_right"
+    print("Offering Hand")
+    speak("Caution: Offering Right Hand")
+    subprocess.run(command, shell=True, text=True)
+    offerPos()
+
+def home_right():
+    command = "rosrun play_motion run_motion_python_node.py home_right"
+    print("Retracting Hand")
+    speak("Caution: Retracting Right Hand")
+    subprocess.run(command, shell=True, text=True)
+
+
+# Advanced Arm Control
+arm_pos = [-1.1,1.46,2.71,1.7,-1.57,1.38,-0.0002,0.0,0.0]
+arm_step = 0.3
+gripper_step = 0.025
+joint = 0
+
+def resetPos():
+    global arm_pos
+    arm_pos = [-1.1,1.46,2.71,1.7,-1.57,1.38,-0.0002,0.0,0.0]
+
+def offerPos():
+    global arm_pos
+    arm_pos = [1.5,0.57,0.06,1.0006,-1.7,-1.0,-4.91,0.0,0.0]
+
+def arm_command():
+    command = f"rosrun play_motion move_joint arm_right_{joint}_joint {arm_pos[joint-1]} 5.0"
+    subprocess.run(command, shell=True, text=True)
+
+def grip_command():
+    if joint == 8:
+        command = f"rosrun play_motion move_joint gripper_right_left_finger_joint {arm_pos[joint-1]} 5.0"
+    if joint == 9:
+        command = f"rosrun play_motion move_joint gripper_right_right_finger_joint {arm_pos[joint-1]} 5.0"
+    subprocess.run(command, shell=True, text=True)
+
+def joint_select():
+    global joint
+    running = True
+    while (running):
+        user_input = input("Select Joint via Number. You cannot control the rest of the robot. Press q to return\n")
+        if len(user_input) == 1:
+            if user_input == 'q':
+                running = False
+            else:
+                joint = int(user_input)
+                if (joint >0) & (joint <=7):
+                    arm_control()
+                if (joint >7) & (joint <=9):
+                    grip_control()
+        
+
+def arm_control():
+    global arm_pos
+    global arm_step
+    running = True
+    print(f"Controlling Joint {joint}")
+    while(running):
+        user_input = input("Use r and t to control. You cannot control the rest of the robot. Press q to return\n")
+        if check(user_input):
+            if user_input == 'q':
+                running = False
+            if user_input[0] == 't':
+                arm_pos[joint-1] -= arm_step*len(user_input)    
+                arm_command()
+            if user_input[0] == 'r':
+                arm_pos[joint-1] += arm_step*len(user_input)
+                arm_command()
+
+def grip_control():
+    global arm_pos
+    global arm_step
+    running = True
+    print(f"Controlling Grip {joint}")
+    while(running):
+        user_input = input("Use r and t to control. You cannot control the rest of the robot. Press q to return\n")
+        if len(user_input) == 1:
+            if check(user_input):
+                if user_input == 'q':
+                    running = False
+                if user_input == 't':
+                    if check_t_boundary(gripper_step):
+                        arm_pos[joint-1] -= gripper_step
+                        grip_command()
+                if user_input == 'r':
+                    if check_r_boundary(gripper_step):
+                        arm_pos[joint-1] += gripper_step
+                        grip_command()
+
+
+
       
 # Speech Command       
-def speak():
-    """Capture text input and send it to Tiago's TTS system."""
-    print("Type a message for Tiago to say:")
-    user_text = input("> ")  # Wait for user input
-    command = f"""rostopic pub /tts/say std_msgs/String '{{data: "{user_text}"}}'"""
+def speak(text):
+    command = f"""timeout 3 rostopic pub -1 /tts/goal pal_interaction_msgs/TtsActionGoal "{{
+                    goal: {{
+                        rawtext: {{
+                            text: '{text}',
+                            lang_id: 'en_GB'
+                        }}
+                    }}
+                }}" """
+    print("Tiago is Speaking")
     subprocess.run(command, shell=True, text=True)
-    print(f'Tiago said: "{user_text}"')
+
+# Home
+def home():
+    command = "rosrun play_motion  run_motion_python_node.py home"
+    print("Returning to home position")
+    speak("Caution: Return to Home Position")
+    subprocess.run(command, shell=True, text=True)
+
     
-# Emergency Stop Commands
-emergency_stop_active = False
+# Sending Commands
+def check(text):
+    first = text[0]
+    for letter in text:
+        if letter != first:
+            return False
+    
+    return True
 
-def toggle_emergency_stop():
-    """Toggle emergency stop for Tiago."""
-    global emergency_stop_active
-    emergency_stop_active = not emergency_stop_active  # Toggle state
+def check_for_stop(process):
+    listen = input("Send E to halt command, Send EE to full emergency stop\n")
+    if listen == "E":
+        process.terminate()
 
-    command = f"""rostopic pub /emergency_stop std_msgs/Bool "data: {str(emergency_stop_active).lower()}" """
-    subprocess.run(command, shell=True, text=True)
 
-    if emergency_stop_active:
-        print("EMERGENCY STOP ACTIVATED")
-    else:
-        print("EMERGENCY STOP DEACTIVATED")
+def runKeyboard():
+    running = True
+    while (running):
+        user_input = input("Enter command. Send 'E' to exit program\n")
+        if len(user_input) != 0:
+            if check(user_input):
+                char = user_input[0]
+                count = len(user_input)
+                if user_input == 'q':
+                    joint_select()
+                if char == "w":
+                    moveForward(count)
+                if char == 'a':
+                    turnLeft(count)
+                if char == 's':
+                    moveBackward(count)
+                if char == 'd':
+                    turnRight(count)
+                if user_input == 'y':
+                    speak("Hello")  
+                if char == 'i':
+                    headUp(count)
+                if char == 'j':
+                    headLeft(count)
+                if char == 'k':
+                    headDown(count)
+                if char == 'l':
+                    headRight(count)
+                if user_input == 'R':
+                    release()
+                if user_input == 'T':
+                    tighten()
+                if user_input == 'W':
+                    torsoUp()
+                if user_input == 'S':
+                    torsoDown()
+                if user_input == 'F':
+                    resetTorso()
+                if user_input == 'o':
+                    offer()
+                if user_input == 'p':
+                    home_right()
+                if user_input == 'H':
+                    home()
+                    resetPos()
+                if char == "E":
+                    running = False
+                    print("Exited Program")
+            else:
+                print("Please only send one command at a time")
+        else:
+            print("Please enter a command")
 
-# Base Movement Keys
-keyboard.add_hotkey('w', moveForward)
-keyboard.add_hotkey('a', turnLeft)
-keyboard.add_hotkey('s', moveBackward)
-keyboard.add_hotkey('d', turnRight)
-
-# Head Movement Keys
-keyboard.add_hotkey('up', headUp)
-keyboard.add_hotkey('left', headLeft)
-keyboard.add_hotkey('down', headDown)
-keyboard.add_hotkey('right', headRight)
-
-# Torso Movement Keys
-keyboard.add_hotkey("shift+up", torsoUp) 
-keyboard.add_hotkey("shift+down", torsoDown)  
-
-# Grip Keys
-keyboard.add_hotkey('r', releaseGrip)
-keyboard.add_hotkey('t', tightenGrip)
-
-# Speech Mode Key
-keyboard.add_hotkey("f", speak)
-
-# Emergency Stop Key
-keyboard.add_hotkey("shift+e", toggle_emergency_stop)
-
-print("Press 'F' to type a message for Tiago to say. Press 'Esc' to exit.")
-
-keyboard.wait('esc')  # Wait for 'esc' key to exit
+if __name__ == "__main__":
+    runKeyboard()
