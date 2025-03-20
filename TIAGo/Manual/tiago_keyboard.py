@@ -325,9 +325,9 @@ def runKeyboard():
                     torsoDown()
                 if user_input == 'F':
                     resetTorso()
-                if user_input == 'o':
+                if user_input == 'F':
                     offer()
-                if user_input == 'p':
+                if user_input == 'G':
                     home_right()
                 if user_input == 'H':
                     home()
