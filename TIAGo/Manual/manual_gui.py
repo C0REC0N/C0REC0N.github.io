@@ -1,8 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox
-import multiprocessing
-import tiago_keyboard
-import tiago_controller
 import keyboard_controls
 import controller_controls
 import subprocess
@@ -14,49 +11,25 @@ controller_process = None
 # Track which process is active
 active_process = None  # 'keyboard', 'controller'
 
-def start_keyboard():
-    subprocess.run("python tiago_keyboard.py", shell=True, text=True)
-
-def end_keyboard():
-    subprocess.run("E", shell=True, text=True)
-
-def start_controller():
-    subprocess.run("python tiago_controller.py", shell=True, text=True)
+proc = None
 
 def run_keyboard_control():
-    global keyboard_process, controller_process, active_process
-
-    # Stop the controller process if it's running
-    if controller_process is not None and controller_process.is_alive():
-        controller_process.terminate()
-        controller_process.join()
-        controller_process = None
+    global active_process, proc
+    if proc is not None:
+        proc.terminate()
         print("Stopped Controller Control")
-
-    # Start the keyboard process if not already running
-    if keyboard_process is None or not keyboard_process.is_alive():
-        keyboard_process = multiprocessing.Process(target=start_keyboard)
-        keyboard_process.start()
-        active_process = 'keyboard'
-        print("Started Keyboard Control")
+    proc = subprocess.Popen(["terminator", "-e", f"bash -c 'python tiago_controller.py; exec bash'"])
+    active_process = 'keyboard'
+    print("Started Keyboard Control")
 
 def run_controller_control():
-    global keyboard_process, controller_process, active_process
-
-    # Stop the keyboard process if it's running
-    if keyboard_process is not None and keyboard_process.is_alive():
-        keyboard_process.terminate()
-        keyboard_process.join()
-        keyboard_process = None
-        end_keyboard()
+    global active_process, proc
+    if proc is not None:
+        proc.terminate()
         print("Stopped Keyboard Control")
-
-    # Start the controller process if not already running
-    if controller_process is None or not controller_process.is_alive():
-        controller_process = multiprocessing.Process(target=start_controller)
-        controller_process.start()
-        active_process = 'controller'
-        print("Started Controller Control")
+    proc = subprocess.Popen(["terminator", "-e", f"bash -c 'python tiago_controller.py; exec bash'"])
+    active_process = 'controller'
+    print("Started Controller Control")
 
 def show_controls_window():
     if active_process == 'keyboard':
@@ -133,22 +106,8 @@ def create_gui():
     )
     show_controls_button.pack(pady=40)
 
-    
-    def on_closing():
-        # Terminate both processes if they are running
-        if keyboard_process is not None and keyboard_process.is_alive():
-            keyboard_process.terminate()
-            keyboard_process.join()
-        if controller_process is not None and controller_process.is_alive():
-            controller_process.terminate()
-            controller_process.join()
-        window.destroy()
-
-    window.protocol("WM_DELETE_WINDOW", on_closing)
-
     # Run the window loop
     window.mainloop()
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method('spawn')  # Ensures compatibility across OSes
     create_gui()
