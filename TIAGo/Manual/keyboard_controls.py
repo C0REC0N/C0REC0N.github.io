@@ -3,7 +3,7 @@ import tkinter as tk
 def key_controls():   
     controls_window = tk.Toplevel()
     controls_window.title("Keyboard Controls")
-    controls_window.geometry("300x200")
+    controls_window.geometry("1000x1000")
     controls_window.configure(bg="white")
 
     label = tk.Label(controls_window, text="Keyboard Control Instructions", font=("Arial", 14), bg="white")
@@ -33,20 +33,11 @@ def key_controls():
     G - Return Hand
     E - Cancel Action/Quit Program
         
-    Press 'q' to enter advanced arm control mode. Then select a joint by pressing a number.
+    Press 'q' to enter advanced arm control mode. Then select a joint by pressing a number (1-9).
     Then control using r and t (send multiple of same key to move further). After selecting
     a joint, press 'q' to go back to joint selection, and press again to go back to basic
     control.
     
-    1 -
-    2 -
-    3 -
-    4 -
-    5 - 
-    6 - 
-    7 - 
-    8 - 
-    9 -
     
     """
     text_widget = tk.Label(controls_window, text=instructions, font=("Arial", 12), bg="white", justify="left")
