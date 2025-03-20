@@ -28,7 +28,7 @@ def move_base():
     global linear_speed
     global angular_speed
     """Send velocity command to Tiago's base."""
-    command = ["timeout", "2", "rostopic", "pub", "--rate", "10", "/mobile_base_controller/cmd_vel", "geometry_msgs/Twist", f"""
+    command = ["timeout", "3", "rostopic", "pub", "--rate", "10", "/mobile_base_controller/cmd_vel", "geometry_msgs/Twist", f"""
 linear:
   x: {linear_speed}
   y: 0.0
@@ -47,7 +47,7 @@ def check_for_stop(process):
         for event in pygame.event.get():
                 if event.type == pygame.JOYBUTTONDOWN:  # Check if a button is pressed
                     button = event.button
-                    if button == 1:
+                    if button == 2:
                         running = False
                         process.terminate()
                 if event is not None:
@@ -156,8 +156,6 @@ def home():
 def handle_button_press(button):
     if button == 0:
         speak("Hello")
-    elif button == 2:
-        print("Button X pressed!")
     elif button == 3:
         home()
     elif button == 4:
@@ -173,27 +171,28 @@ def handle_left_joy(value):
 
     global linear_speed
     global angular_speed
-    
+    print(value)
     if value == (0,1): # Forward
-        linear_speed = 0.2
+        linear_speed = 0.3
         angular_speed = 0.0
         move_base()
     elif value == (1,0): # Right
         linear_speed = 0.0
-        angular_speed = -0.2
+        angular_speed = -0.3
         move_base()
     elif value == (-1,0): # Left
         linear_speed = 0.0
-        angular_speed = 0.2
+        angular_speed = 0.3
         move_base()
     elif value == (0,-1): # Backward
-        linear_speed = -0.2
+        linear_speed = -0.3
         angular_speed = 0.0
         move_base()
 
 def handle_other_buttons(axis, value):
         
     if axis == 1: #torso. -1 = up. 1 = down
+    
         if value <= -1:
             torsoUp()
         elif value >= 1:
@@ -202,13 +201,13 @@ def handle_other_buttons(axis, value):
         if value == 1:
             release()
     elif axis == 3: #lookX -1 = up. 1 = down
-        print (value)
+     
         if value <= -1:
             lookX(1)
         elif value >= 1:
             lookX(-1)
     elif axis == 4: #lookY -1 = left. 1 = right
-        print (value)
+    
         if value <= -1:
             lookY(1)
         elif value >= 1:
@@ -229,7 +228,7 @@ def runController():
     while running:
         # Handle events
         for event in pygame.event.get():
-            print(event.type)
+          
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.JOYBUTTONDOWN:  # Check if a button is pressed
