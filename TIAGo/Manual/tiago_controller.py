@@ -21,6 +21,37 @@ def setup():
     joystick.init()
     print(f"Connected to: {joystick.get_name()}")
 
+linear_speed = 0.0
+angular_speed = 0.0
+
+def move_base():
+    global linear_speed
+    global angular_speed
+    """Send velocity command to Tiago's base."""
+    command = ["timeout", "2", "rostopic", "pub", "--rate", "10", "/mobile_base_controller/cmd_vel", "geometry_msgs/Twist", f"""
+linear:
+  x: {linear_speed}
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: {angular_speed}"""]
+    process = subprocess.Popen(command)
+    check_for_stop(process)
+    
+def check_for_stop(process):
+    
+    running = True
+    while (running):
+        for event in pygame.event.get():
+                if event.type == pygame.JOYBUTTONDOWN:  # Check if a button is pressed
+                    button = event.button
+                    if button == 1:
+                        running = False
+                        process.terminate()
+                if event is not None:
+                    running = False
 
 # Basic Arm Command  
 
@@ -115,16 +146,20 @@ def torsoDown():
         torso_pos -= step
         print("Lowering")
         move_torso()
+        
+def home():
+    command = "rosrun play_motion  run_motion_python_node.py home"
+    print("Returning to home position")
+    speak("Caution: Return to Home Position")
+    subprocess.run(command, shell=True, text=True)
 
 def handle_button_press(button):
     if button == 0:
-        print("Button A pressed!")
-    elif button == 1:
-        print("Button B pressed!")
+        speak("Hello")
     elif button == 2:
         print("Button X pressed!")
     elif button == 3:
-        print("Button Y pressed!")
+        home()
     elif button == 4:
         home_right()
     elif button == 5:
@@ -136,15 +171,33 @@ def handle_button_press(button):
 
 def handle_left_joy(value):
 
-    forward = (0,1)
-    right = (1,0)
-    left = (-1,0)
-    backward = (0,-1)
+    global linear_speed
+    global angular_speed
+    
+    if value == (0,1): # Forward
+        linear_speed = 0.2
+        angular_speed = 0.0
+        move_base()
+    elif value == (1,0): # Right
+        linear_speed = 0.0
+        angular_speed = -0.2
+        move_base()
+    elif value == (-1,0): # Left
+        linear_speed = 0.0
+        angular_speed = 0.2
+        move_base()
+    elif value == (0,-1): # Backward
+        linear_speed = -0.2
+        angular_speed = 0.0
+        move_base()
 
 def handle_other_buttons(axis, value):
         
     if axis == 1: #torso. -1 = up. 1 = down
-        value = 0
+        if value <= -1:
+            torsoUp()
+        elif value >= 1:
+            torsoDown()
     elif axis == 2: #leftT 1 = press
         if value == 1:
             release()
@@ -181,11 +234,14 @@ def runController():
                 running = False
             elif event.type == pygame.JOYBUTTONDOWN:  # Check if a button is pressed
                 button = event.button
-                handle_button_press(button)
+                if button == 1:
+                    running = False
+                else:
+                    handle_button_press(button)
             elif event.type == 1538: # Left Joystick
                 handle_left_joy(event.value)
                 value = event.value
-            elif event.type == 1536:
+            elif event.type == 1536: # Other
                 handle_other_buttons(event.axis, event.value)
 
       
@@ -196,4 +252,3 @@ def runController():
 
 if __name__ == "__main__":
     runController()
-
