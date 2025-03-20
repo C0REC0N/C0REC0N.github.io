@@ -240,13 +240,11 @@ def grip_control():
                 if user_input == 'q':
                     running = False
                 if user_input == 't':
-                    if check_t_boundary(gripper_step):
-                        arm_pos[joint-1] -= gripper_step
-                        grip_command()
+                    arm_pos[joint-1] -= gripper_step
+                    grip_command()
                 if user_input == 'r':
-                    if check_r_boundary(gripper_step):
-                        arm_pos[joint-1] += gripper_step
-                        grip_command()
+                    arm_pos[joint-1] += gripper_step
+                    grip_command()
 
 
 
