@@ -18,7 +18,7 @@ def run_keyboard_control():
     if proc is not None:
         proc.terminate()
         print("Stopped Controller Control")
-    proc = subprocess.Popen(["terminator", "-e", f"bash -c 'python tiago_controller.py; exec bash'"])
+    proc = subprocess.run("python tiago_keyboard.py", shell=True, text=True)
     active_process = 'keyboard'
     print("Started Keyboard Control")
 
@@ -27,17 +27,13 @@ def run_controller_control():
     if proc is not None:
         proc.terminate()
         print("Stopped Keyboard Control")
-    proc = subprocess.Popen(["terminator", "-e", f"bash -c 'python tiago_controller.py; exec bash'"])
+    proc = subprocess.run("python tiago_controller.py", shell=True, text=True)
     active_process = 'controller'
     print("Started Controller Control")
 
 def show_controls_window():
-    if active_process == 'keyboard':
-        show_keyboard_controls()
-    elif active_process == 'controller':
-        show_controller_controls()
-    else:
-        messagebox.showinfo("No Active Process", "Please start either Keyboard or Controller Control first.")
+    show_keyboard_controls()
+    show_controller_controls()
 
 def show_keyboard_controls():
     print("Opening Keyboard Controls Window...")
