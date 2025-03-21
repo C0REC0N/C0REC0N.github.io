@@ -10,6 +10,7 @@ def con_controls():
     label.pack(pady=20)
 
     instructions = """
+
     Left Stick - Move & Turn
     Right Stick Move - Look Around
     Right Stick Click - Reset Head
@@ -26,6 +27,7 @@ def con_controls():
     B - Exit Program
     Y - Return to Home
     X - Cancel Movement
+    
     """
     text_widget = tk.Label(controls_window, text=instructions, font=("Arial", 12), bg="white", justify="left")
     text_widget.pack(pady=10)
