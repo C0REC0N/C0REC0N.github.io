@@ -10,6 +10,7 @@ def key_controls():
     label.pack(pady=20)
 
     instructions = """
+    
     You must hit enter to send keyboard command. CASE SENSITIVE COMMANDS.
     For the following 4 controls, press the key more to move further.
     
@@ -29,9 +30,9 @@ def key_controls():
     R - Release Grip
     T - Tighten Grip
     y - Say Hello
+    H - Home Position
     F - Offer Hand
     G - Return Hand
-    H - Home
     E - Cancel Action/Quit Program
         
     Press 'q' to enter advanced arm control mode. Then select a joint by pressing a number (1-9).
