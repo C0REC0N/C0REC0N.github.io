@@ -31,6 +31,7 @@ def key_controls():
     y - Say Hello
     F - Offer Hand
     G - Return Hand
+    H - Home
     E - Cancel Action/Quit Program
         
     Press 'q' to enter advanced arm control mode. Then select a joint by pressing a number (1-9).
