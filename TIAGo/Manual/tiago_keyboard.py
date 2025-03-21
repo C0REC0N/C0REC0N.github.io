@@ -135,12 +135,6 @@ def torsoDown():
         torso_pos -= step
         print("Lowering")
         move_torso()
-
-def resetTorso():
-    global torso_pos
-    torso_pos = 0.0
-    print("Resetting Torso")
-    move_torso()
         
 # Basic Arm Command  
 
@@ -321,8 +315,6 @@ def runKeyboard():
                     torsoUp()
                 if user_input == 'S':
                     torsoDown()
-                if user_input == 'F':
-                    resetTorso()
                 if user_input == 'F':
                     offer()
                 if user_input == 'G':
