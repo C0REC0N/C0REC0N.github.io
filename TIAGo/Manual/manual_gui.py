@@ -4,17 +4,17 @@ import keyboard_controls
 import controller_controls
 import subprocess
 
-# Globals to hold the process objects
-keyboard_process = None
-controller_process = None
+# ========== Globals ========== #
 
-# Track which process is active
-active_process = None  # 'keyboard', 'controller'
-
+# Holds the currently running subprocess
 proc = None
+active_process = None  # 'keyboard' or 'controller'
+
+# ========== Control Launchers ========== #
 
 def run_keyboard_control():
-    global active_process, proc
+    """Start keyboard control script, stopping controller if active."""
+    global proc, active_process
     if proc is not None:
         proc.terminate()
         print("Stopped Controller Control")
@@ -23,7 +23,8 @@ def run_keyboard_control():
     print("Started Keyboard Control")
 
 def run_controller_control():
-    global active_process, proc
+    """Start controller control script, stopping keyboard if active."""
+    global proc, active_process
     if proc is not None:
         proc.terminate()
         print("Stopped Keyboard Control")
@@ -31,78 +32,85 @@ def run_controller_control():
     active_process = 'controller'
     print("Started Controller Control")
 
+# ========== Controls Window Handlers ========== #
+
 def show_controls_window():
+    """Show both keyboard and controller control windows."""
     show_keyboard_controls()
     show_controller_controls()
 
 def show_keyboard_controls():
+    """Open keyboard control help window."""
     print("Opening Keyboard Controls Window...")
     keyboard_controls.key_controls()
 
 def show_controller_controls():
+    """Open controller control help window."""
     print("Opening Controller Controls Window...")
     controller_controls.con_controls()
+
+# ========== GUI Setup ========== #
+
 def create_gui():
-    # Create the main window
+    """Create and display the main Tiago Control Panel window."""
     window = tk.Tk()
     window.title("Tiago Control Panel")
-    window.geometry("600x400") 
+    window.geometry("600x400")
     window.configure(bg="white")
 
-    # Button styling
+    # Button styling options
     button_style = {
-        "bg": "#4CAF50",          # Nice green color
-        "fg": "white",            # White text
-        "activebackground": "#45a049",  # Darker green when pressed
-        "font": ("Arial", 14),    # Bigger font
-        "width": 20,              # Wider button
-        "height": 3,              # Taller button
-        "bd": 0,                  # No border
-        "relief": "flat",         # Flat look
-        "cursor": "hand2"         # Pointer cursor on hover
+        "bg": "#4CAF50",            # Green
+        "fg": "white",
+        "activebackground": "#45a049",
+        "font": ("Arial", 14),
+        "width": 20,
+        "height": 3,
+        "bd": 0,
+        "relief": "flat",
+        "cursor": "hand2"
     }
 
-    # Create a frame to hold the two control buttons side by side
+    # Button container
     button_frame = tk.Frame(window, bg="white")
     button_frame.pack(expand=True)
 
-    # Button 1 - Run Keyboard Control
-    button1 = tk.Button(
-        button_frame, 
-        text="Run Keyboard Control", 
-        command=lambda: run_keyboard_control(),
+    # Keyboard Control Button
+    tk.Button(
+        button_frame,
+        text="Run Keyboard Control",
+        command=run_keyboard_control,
         **button_style
-    )
-    button1.pack(side="left", padx=20, pady=10)
+    ).pack(side="left", padx=20, pady=10)
 
-    # Button 2 - Run Controller Control
-    button2 = tk.Button(
-        button_frame, 
-        text="Run Controller Control", 
-        command=lambda: run_controller_control(),
+    # Controller Control Button
+    tk.Button(
+        button_frame,
+        text="Run Controller Control",
+        command=run_controller_control,
         **button_style
-    )
-    button2.pack(side="left", padx=20, pady=10)
+    ).pack(side="left", padx=20, pady=10)
 
     # Show Controls Button
-    show_controls_button = tk.Button(
+    tk.Button(
         window,
         text="Show Controls",
         command=show_controls_window,
-        bg="#2196F3",                # Blue color for difference
+        bg="#2196F3",
         fg="white",
-        activebackground="#1976D2",  # Darker blue on click
+        activebackground="#1976D2",
         font=("Arial", 14),
         width=20,
         height=2,
         bd=0,
         relief="flat",
         cursor="hand2"
-    )
-    show_controls_button.pack(pady=40)
+    ).pack(pady=40)
 
-    # Run the window loop
+    # Start the GUI event loop
     window.mainloop()
+
+# ========== Main Execution ========== #
 
 if __name__ == "__main__":
     create_gui()
